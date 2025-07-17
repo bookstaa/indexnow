@@ -1,1 +1,10 @@
+{
+  "cleanUrls": true,
+  "rewrites": [
+    {
+      "source": "/f957624a77ca4beea15944d6ee307b97.txt",
+      "destination": "/public/f957624a77ca4beea15944d6ee307b97.txt"
+    }
+  ]
+}
 
