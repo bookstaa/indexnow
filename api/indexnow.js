@@ -1,44 +1,45 @@
 export default async function handler(req, res) {
-  if (req.method === 'GET') {
-    return res.status(200).send("IndexNow endpoint is alive ✅");
-  }
-
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Only POST method is allowed' });
   }
 
-  const INDEXNOW_API_KEY = 'f957624a77ca4beea15944d6ee307b97';
+  const body = req.body;
+  let url = '';
 
-  try {
-    const shopifyData = req.body;
-
-    // 🔍 Extract product handle to build URL
-    const handle = shopifyData.handle;
-    if (!handle) {
-      return res.status(400).json({ message: 'Product handle not found in payload' });
+  // Detect resource type and construct URL
+  if (body.handle && body.title) {
+    if (body.admin_graphql_api_id.includes('Blog')) {
+      url = `https://bookstaa.com/blogs/${body.handle}`;
+    } else if (body.admin_graphql_api_id.includes('Page')) {
+      url = `https://bookstaa.com/pages/${body.handle}`;
+    } else if (body.admin_graphql_api_id.includes('Collection')) {
+      url = `https://bookstaa.com/collections/${body.handle}`;
     }
-
-    const productUrl = `https://bookstaa.com/products/${handle}`;
-
-    const indexnowPayload = {
-      host: 'bookstaa.com',
-      key: INDEXNOW_API_KEY,
-      keyLocation: `https://bookstaa.com/${INDEXNOW_API_KEY}.txt`,
-      urlList: [productUrl],
-    };
-
-    const response = await fetch('https://api.indexnow.org/indexnow', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(indexnowPayload),
-    });
-
-    const text = await response.text();
-
-    console.log("✅ Submitted to IndexNow:", productUrl);
-    res.status(200).send(text);
-  } catch (err) {
-    console.error("❌ Error submitting to IndexNow:", err);
-    res.status(500).json({ message: 'IndexNow request failed', error: err.message });
   }
+
+  // Fallback: product URL (already working)
+  if (!url && body.handle && body.title) {
+    url = `https://bookstaa.com/products/${body.handle}`;
+  }
+
+  if (!url) {
+    return res.status(400).json({ message: 'Could not construct URL from webhook data' });
+  }
+
+  const INDEXNOW_API_KEY = 'f957624a77ca4beea15944d6ee307b97';
+  const payload = {
+    host: 'bookstaa.com',
+    key: INDEXNOW_API_KEY,
+    keyLocation: `https://bookstaa.com/${INDEXNOW_API_KEY}.txt`,
+    urlList: [url]
+  };
+
+  const indexnowResponse = await fetch('https://api.indexnow.org/indexnow', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+
+  console.log('✅ Submitted to IndexNow:', url);
+  res.status(200).json({ success: true, submitted: url });
 }
