@@ -15,34 +15,36 @@ export default async function handler(req, res) {
   }
 
   const body = req.body;
-  let url = '';
+  let path = '';
 
-  // Detect resource type and construct URL
+  // Detect resource type and construct URL path
   if (body.handle && body.title) {
     if (body.admin_graphql_api_id?.includes('Blog')) {
-      url = `https://bookstaa.com/blogs/${body.handle}`;
+      path = `/blogs/${body.handle}`;
     } else if (body.admin_graphql_api_id?.includes('Page')) {
-      url = `https://bookstaa.com/pages/${body.handle}`;
+      path = `/pages/${body.handle}`;
     } else if (body.admin_graphql_api_id?.includes('Collection')) {
-      url = `https://bookstaa.com/collections/${body.handle}`;
+      path = `/collections/${body.handle}`;
+    } else {
+      // Fallback to product
+      path = `/products/${body.handle}`;
     }
   }
 
-  // Fallback: product URL
-  if (!url && body.handle && body.title) {
-    url = `https://bookstaa.com/products/${body.handle}`;
+  if (!path) {
+    return res.status(400).json({ message: 'Could not construct path from webhook data' });
   }
 
-  if (!url) {
-    return res.status(400).json({ message: 'Could not construct URL from webhook data' });
-  }
-
+  // Use the verified domain
+  const BASE_URL = 'https://indexnow-gilt.vercel.app';
   const INDEXNOW_API_KEY = 'f957624a77ca4beea15944d6ee307b97';
+  const fullUrl = `${BASE_URL}${path}`;
+
   const payload = {
-    host: 'bookstaa.com',
+    host: 'indexnow-gilt.vercel.app',
     key: INDEXNOW_API_KEY,
-    keyLocation: `https://bookstaa.com/${INDEXNOW_API_KEY}.txt`,
-    urlList: [url]
+    keyLocation: `${BASE_URL}/${INDEXNOW_API_KEY}.txt`,
+    urlList: [fullUrl]
   };
 
   try {
@@ -57,8 +59,8 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'IndexNow submission failed' });
     }
 
-    console.log('✅ Submitted to IndexNow:', url);
-    return res.status(200).json({ success: true, submitted: url });
+    console.log('✅ Submitted to IndexNow:', fullUrl);
+    return res.status(200).json({ success: true, submitted: fullUrl });
 
   } catch (error) {
     console.error('❌ Error submitting to IndexNow:', error);
