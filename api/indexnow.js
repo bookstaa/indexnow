@@ -36,16 +36,16 @@ export default async function handler(req, res) {
   }
 
   // Use Bookstaa domain instead of Vercel one
-  const BASE_URL = 'https://bookstaa.com';
-  const INDEXNOW_API_KEY = 'f957624a77ca4beea15944d6ee307b97';
-  const fullUrl = `${BASE_URL}${path}`;
+  const BASE_URL = 'https://indexnow-gilt.vercel.app';
+const INDEXNOW_API_KEY = 'f957624a77ca4beea15944d6ee307b97';
 
-  const payload = {
-    host: 'bookstaa.com',
-    key: INDEXNOW_API_KEY,
-    keyLocation: 'https://cdn.shopify.com/s/files/1/0770/3353/7820/files/f957624a77ca4beea15944d6ee307b97.txt?v=1753189856',
-    urlList: [fullUrl]
-  };
+const payload = {
+  host: 'indexnow-gilt.vercel.app',
+  key: INDEXNOW_API_KEY,
+  keyLocation: `${BASE_URL}/${INDEXNOW_API_KEY}.txt`,
+  urlList: [`https://bookstaa.com${path}`], // still notify your real site
+};
+
 
   try {
     const indexnowResponse = await fetch('https://api.indexnow.org/indexnow', {
